@@ -10,6 +10,17 @@ class gogs::install (
 
 ) {
 
+  case $::architecture {
+    'armv7l', 'armv6l': {
+      $puppet_gogs_os='raspi2'
+      $puppet_gogs_arch='armv6'
+    }
+    default: {
+      $puppet_gogs_os='linux'
+      $puppet_gogs_arch=$::architecture
+    }
+  }
+
   file { $repository_root:
     ensure => 'directory',
     owner  => $owner,
@@ -55,8 +66,8 @@ class gogs::install (
       group       => $group,
       environment => [
         "PUPPET_GOGS_INSTALLATION_DIRECTORY=${installation_directory}",
-        'PUPPET_GOGS_OS=linux',
-        "PUPPET_GOGS_ARCH=${::architecture}",
+        "PUPPET_GOGS_OS=${puppet_gogs_os}",
+        "PUPPET_GOGS_ARCH=${puppet_gogs_arch}",
         "PUPPET_GOGS_VERSION=${version}",
       ],
       logoutput   => true,

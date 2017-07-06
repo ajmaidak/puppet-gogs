@@ -2,6 +2,18 @@
 
 set -e
 
+unzip-strip() (
+    local zip=$1
+    local dest=${2:-.}
+    local temp=$(mktemp -d) && unzip -d "$temp" "$zip" && mkdir -p "$dest" &&
+    shopt -s dotglob && local f=("$temp"/*) &&
+    if (( ${#f[@]} == 1 )) && [[ -d "${f[0]}" ]] ; then
+        mv "$temp"/*/* "$dest"
+    else
+        mv "$temp"/* "$dest"
+    fi && rmdir "$temp"/* "$temp"
+)
+
 if [ -z ${PUPPET_GOGS_INSTALLATION_DIRECTORY} ]; then echo "PUPPET_GOGS_INSTALLATION_DIRECTORY not set!"; exit 1;  fi
 if [ -z ${PUPPET_GOGS_OS} ]; then echo "PUPPET_GOGS_OS not set!"; exit 1;  fi
 if [ -z ${PUPPET_GOGS_ARCH} ]; then echo "PUPPET_GOGS_ARCH not set!"; exit 1;  fi
@@ -21,7 +33,7 @@ if [ ${PUPPET_GOGS_VERSION} == "latest" ]; then
     PUPPET_GOGS_VERSION=${LATEST_VERSION}
 fi
 
-DOWNLOAD_TAR_GZ_URL="https://github.com/gogits/gogs/releases/download/v${PUPPET_GOGS_VERSION}/${PUPPET_GOGS_OS}_${PUPPET_GOGS_ARCH}.tar.gz"
+DOWNLOAD_ZIP_URL="https://github.com/gogits/gogs/releases/download/v${PUPPET_GOGS_VERSION}/${PUPPET_GOGS_OS}_${PUPPET_GOGS_ARCH}.zip"
 DOWNLOAD_VERSION_URL="https://raw.githubusercontent.com/gogits/gogs/v${PUPPET_GOGS_VERSION}/templates/.VERSION"
 
 if [ -f "${PUPPET_GOGS_INSTALLATION_DIRECTORY}/templates/.VERSION" ]; then
@@ -37,7 +49,7 @@ fi
 
 echo "download and extract version ${PUPPET_GOGS_VERSION}"
 
-wget ${DOWNLOAD_TAR_GZ_URL} -O /tmp/gogs.tar.gz
-tar -xzf /tmp/gogs.tar.gz -C ${PUPPET_GOGS_INSTALLATION_DIRECTORY} --strip 1
+wget ${DOWNLOAD_ZIP_URL} -O /tmp/gogs.zip
+unzip-strip /tmp/gogs.zip ${PUPPET_GOGS_INSTALLATION_DIRECTORY}
 
-rm -f /tmp/gogs.tar.gz
+rm -f /tmp/gogs.zip
